@@ -33,26 +33,12 @@ public class TFIDFProducer {
     private final static String COMMA_DELIMITER = ",";
     private final static String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
 
-    static void runProducer() {
+    static void runProducer() throws IOException {
         final Producer<String, String> producer = createProducer();
         try {
-            List<File> files = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new FileReader(DATA_PATH + "VEP_Big_Names_of_Science_Metadata.csv"))) {
-                br.readLine();
-                String line;
-                while (br.ready()) {
-                    line = br.readLine();
-                    String textName = line.split(COMMA_DELIMITER)[1];
-                    String pathName = DATA_PATH + textName;
-                    File file = new File(pathName);
-                    if(file.exists()) {
-                        files.add(file);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-//            files = files.subList(0, 2);
+            List<File> files = getFilesToRead();
+
+            files = files.subList(0, 21);
 //            files.removeAll(files);
 //
 //            files.add(new File(DATA_PATH + "document2.txt"));
@@ -88,5 +74,25 @@ public class TFIDFProducer {
         props.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, "eu-central-1");
         props.put(S3BackedSerdeConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
         return new KafkaProducer<>(props);
+    }
+
+    public static List<File> getFilesToRead() {
+        List<File> files = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(DATA_PATH + "VEP_Big_Names_of_Science_Metadata.csv"))) {
+            br.readLine();
+            String line;
+            while (br.ready()) {
+                line = br.readLine();
+                String textName = line.split(COMMA_DELIMITER)[1];
+                String pathName = DATA_PATH + textName;
+                File file = new File(pathName);
+                if (file.exists()) {
+                    files.add(file);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return files;
     }
 }

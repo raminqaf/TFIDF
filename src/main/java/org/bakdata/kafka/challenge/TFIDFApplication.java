@@ -127,7 +127,7 @@ public class TFIDFApplication {
                 .aggregate(
                         () -> 0d,
                         (aggKey, newValue, aggValue) -> {
-                            long documentF;
+                            double documentF;
                             Set<String> setMap = map.get(aggKey);
                             if (setMap != null) {
                                 setMap.add(newValue);

@@ -131,5 +131,6 @@ buildNumber.properties
 ### Data ###
 Data/vep_big_names_of_science_v2_txt/**
 Data/output.csv
+Data/output-calc.csv
 
 # End of https://www.gitignore.io/api/java,maven,intellij
