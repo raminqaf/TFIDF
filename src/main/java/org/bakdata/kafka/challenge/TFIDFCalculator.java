@@ -89,9 +89,7 @@ public class TFIDFCalculator {
             }
         });
         double sumOfWordsInDocument = listOfWords.size();
-        if(fileName.equals("A32712.headed.txt")){
-            System.out.println(sumOfWordsInDocument);
-        }
+
         wordFreq.forEach((word, count) -> {
             double termFrequency = count / sumOfWordsInDocument;
             mapTF.put(word + "@" + fileName, String.valueOf(termFrequency));

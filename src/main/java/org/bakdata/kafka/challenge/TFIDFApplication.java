@@ -105,8 +105,6 @@ public class TFIDFApplication {
 
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
-        Map<String, Set<String>> map = new HashMap<>();
-
         KStream<String, String> tf =
                 textLines.flatMap((documentNameAndCount, fileContent) -> {
                     String documentName = documentNameAndCount.split("-")[0];
@@ -133,62 +131,7 @@ public class TFIDFApplication {
 
         tf.process(TFIDFProcessor::new, "idf");
 
-        List<String> documents = new ArrayList<>();
-        final KTable<String, Double> doucumentCount = textLines
-                .groupByKey()
-                .aggregate(
-                        () -> 0d,
-                        (aggKey, newValue, aggValue) -> {
-                            if (!documents.contains(aggKey)) {
-                                documentCount ++;
-                                documents.add(aggKey);
-                            }
-                            return documentCount;
-                        },
-                        Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as("document-table-store" /* state store name */)
-                                .withKeySerde(Serdes.String()) /* key serde */
-                                .withValueSerde(Serdes.Double())
-                );
-
-        final KTable<String, Double> idf = textLines
-                .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
-                .map((key, word) -> new KeyValue<>(word, key))
-                .groupByKey()
-                .aggregate(
-                        () -> 0d,
-                        (aggKey, newValue, aggValue) -> {
-                            double documentF;
-                            if(aggKey.equals("sumach")) {
-                                System.out.println(aggKey + newValue + aggValue);
-                            }
-                            Set<String> setMap = map.get(aggKey);
-                            if (setMap != null) {
-                                setMap.add(newValue);
-                                map.put(aggKey, setMap);
-                                documentF = setMap.size();
-                            } else {
-                                Set<String> set = new HashSet<>();
-                                set.add(newValue);
-                                map.put(aggKey, set);
-                                documentF = set.size();
-                            }
-                            aggValue = log10(documentCount / documentF);
-                            return aggValue;
-                        },
-                        Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as("aggregated-table-store" /* state store name */)
-                                .withKeySerde(Serdes.String()) /* key serde */
-                                .withValueSerde(Serdes.Double())
-                );
-
-//        tf.join(idf, (tfValue, idfValue) -> {
-//            double tfCount = Double.parseDouble(tfValue.split("@")[0]);
-//            String documentName = tfValue.split("@")[1];
-//            return (tfCount * idfValue) + "@" + documentName;
-//        }).map((key, value) -> {
-//            String tfidf = value.split("@")[0];
-//            String documentName = value.split("@")[1];
-//            return new KeyValue<>(String.format("tfidf(%s, %s, D)", key, documentName), tfidf);
-//        }).to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+        tf.to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
     }
 }
