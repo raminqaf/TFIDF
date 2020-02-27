@@ -37,7 +37,7 @@ import static org.bakdata.kafka.challenge.TFIDFProducer.runProducer;
 public class TFIDFApplication {
     static final String inputTopic = "streams-plaintext-input";
     static final String outputTopic = "streams-output";
-    static long documentCount = 0L;
+    static double documentCount = 0d;
 
     public static void main(final String[] args) throws Exception {
         final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
@@ -92,6 +92,17 @@ public class TFIDFApplication {
     static void createWordCountStream(final StreamsBuilder builder) {
         final KStream<String, String> textLines = builder.stream(inputTopic);
 
+
+        // create store
+        StoreBuilder<KeyValueStore<String,Double>> keyValueStoreBuilder =
+                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore("idf"),
+                        Serdes.String(),
+                        Serdes.Double());
+
+        // register store
+        builder.addStateStore(keyValueStoreBuilder);
+
+
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
         Map<String, Set<String>> map = new HashMap<>();
@@ -99,7 +110,7 @@ public class TFIDFApplication {
         KStream<String, String> tf =
                 textLines.flatMap((documentNameAndCount, fileContent) -> {
                     String documentName = documentNameAndCount.split("-")[0];
-                    documentCount = Long.parseLong(documentNameAndCount.split("-")[1]);
+                    //documentCount = Double.parseDouble(documentNameAndCount.split("-")[1]);
                     List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
                     Map<String, Long> wordFreq = new HashMap<>();
                     listOfWords.forEach(word -> {
@@ -115,10 +126,29 @@ public class TFIDFApplication {
                     List<KeyValue<String, String>> list = new ArrayList<>();
                     wordFreq.forEach((word, count) -> {
                         double termFrequency = count / sumOfWordsInDocument;
-                        list.add(new KeyValue<>(word, termFrequency + "@" + documentName));
+                        list.add(new KeyValue<>(word, termFrequency + "@" + documentName + "@" + documentCount));
                     });
                     return list;
                 });
+
+        tf.process(TFIDFProcessor::new, "idf");
+
+        List<String> documents = new ArrayList<>();
+        final KTable<String, Double> doucumentCount = textLines
+                .groupByKey()
+                .aggregate(
+                        () -> 0d,
+                        (aggKey, newValue, aggValue) -> {
+                            if (!documents.contains(aggKey)) {
+                                documentCount ++;
+                                documents.add(aggKey);
+                            }
+                            return documentCount;
+                        },
+                        Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as("document-table-store" /* state store name */)
+                                .withKeySerde(Serdes.String()) /* key serde */
+                                .withValueSerde(Serdes.Double())
+                );
 
         final KTable<String, Double> idf = textLines
                 .flatMapValues(value -> Arrays.asList(pattern.split(value.toLowerCase())))
@@ -128,6 +158,9 @@ public class TFIDFApplication {
                         () -> 0d,
                         (aggKey, newValue, aggValue) -> {
                             double documentF;
+                            if(aggKey.equals("sumach")) {
+                                System.out.println(aggKey + newValue + aggValue);
+                            }
                             Set<String> setMap = map.get(aggKey);
                             if (setMap != null) {
                                 setMap.add(newValue);
@@ -147,15 +180,16 @@ public class TFIDFApplication {
                                 .withValueSerde(Serdes.Double())
                 );
 
-        tf.join(idf, (tfValue, idfValue) -> {
-            double tfCount = Double.parseDouble(tfValue.split("@")[0]);
-            String documentName = tfValue.split("@")[1];
-            return (tfCount * idfValue) + "@" + documentName;
-        }).map((key, value) -> {
-            String tfidf = value.split("@")[0];
-            String documentName = value.split("@")[1];
-            return new KeyValue<>(String.format("tfidf(%s, %s, D)", key, documentName), tfidf);
-        }).to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+//        tf.join(idf, (tfValue, idfValue) -> {
+//            double tfCount = Double.parseDouble(tfValue.split("@")[0]);
+//            String documentName = tfValue.split("@")[1];
+//            return (tfCount * idfValue) + "@" + documentName;
+//        }).map((key, value) -> {
+//            String tfidf = value.split("@")[0];
+//            String documentName = value.split("@")[1];
+//            return new KeyValue<>(String.format("tfidf(%s, %s, D)", key, documentName), tfidf);
+//        }).to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+
     }
 }
 

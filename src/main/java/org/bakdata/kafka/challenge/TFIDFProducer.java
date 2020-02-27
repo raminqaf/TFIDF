@@ -38,7 +38,7 @@ public class TFIDFProducer {
         try {
             List<File> files = getFilesToRead();
 
-            files = files.subList(0, 21);
+//            files = files.subList(0, 21);
 //            files.removeAll(files);
 //
 //            files.add(new File(DATA_PATH + "document2.txt"));

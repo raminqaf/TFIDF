@@ -1,14 +1,9 @@
 package org.bakdata.kafka.challenge;
 
-import org.apache.kafka.streams.KeyValue;
-
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.log10;
 
@@ -25,7 +21,7 @@ public class TFIDFCalculator {
     public static void main(final String[] args) throws Exception {
         List<File> files = TFIDFProducer.getFilesToRead();
 
-        files = files.subList(0, 21);
+//        files = files.subList(0, 21);
 //        files.removeAll(files);
 //
 //        files.add(new File(DATA_PATH + "document2.txt"));
@@ -42,7 +38,8 @@ public class TFIDFCalculator {
             List<String> listOfLines;
             try {
                 listOfLines = Files.readAllLines(file.toPath());
-                String fileContent = String.join("\n", listOfLines);
+                List<String> listOfLinesLowerCase = listOfLines.stream().map(String::toLowerCase).collect(Collectors.toList());
+                String fileContent = String.join("\n", listOfLinesLowerCase);
                 calculateTF(file.getName(), fileContent, mapTF);
                 storeAllWords(file.getName(), fileContent, wordDocument);
             } catch (IOException e) {
@@ -76,7 +73,8 @@ public class TFIDFCalculator {
         System.out.println("DONE");
     }
 
-    private static void calculateTF(String fileName, String fileContent, Map<String, String> listTF) {
+    private static void calculateTF(String fileName, String fileContent, Map<String, String> mapTF) {
+
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
         List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
         Map<String, Long> wordFreq = new HashMap<>();
@@ -91,24 +89,27 @@ public class TFIDFCalculator {
             }
         });
         double sumOfWordsInDocument = listOfWords.size();
+        if(fileName.equals("A32712.headed.txt")){
+            System.out.println(sumOfWordsInDocument);
+        }
         wordFreq.forEach((word, count) -> {
             double termFrequency = count / sumOfWordsInDocument;
-            listTF.put(word + "@" + fileName, String.valueOf(termFrequency));
+            mapTF.put(word + "@" + fileName, String.valueOf(termFrequency));
         });
     }
 
-    private static void storeAllWords(String documentName, String fileContent, Map<String, Set<String>> map) {
+    private static void storeAllWords(String documentName, String fileContent, Map<String, Set<String>> wordDocumentMap) {
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
         List<String> listOfWords = Arrays.asList(pattern.split(fileContent));
         listOfWords.forEach((word) -> {
-            Set<String> setMap = map.get(word);
+            Set<String> setMap = wordDocumentMap.get(word);
             if (setMap != null) {
                 setMap.add(documentName);
-                map.put(word, setMap);
+                wordDocumentMap.put(word, setMap);
             } else {
                 Set<String> set = new HashSet<>();
                 set.add(documentName);
-                map.put(word, set);
+                wordDocumentMap.put(word, set);
             }
         });
     }
