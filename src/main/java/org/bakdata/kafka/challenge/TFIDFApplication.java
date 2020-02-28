@@ -7,15 +7,11 @@ import com.bakdata.kafka.S3BackedSerdeConfig;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
@@ -24,14 +20,12 @@ import org.apache.kafka.streams.state.Stores;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.log10;
 import static org.bakdata.kafka.challenge.TFIDFProducer.runProducer;
 
 public class TFIDFApplication {
@@ -108,7 +102,7 @@ public class TFIDFApplication {
         KStream<String, String> tf =
                 textLines.flatMap((documentNameAndCount, fileContent) -> {
                     String documentName = documentNameAndCount.split("-")[0];
-                    //documentCount = Double.parseDouble(documentNameAndCount.split("-")[1]);
+                    documentCount = Double.parseDouble(documentNameAndCount.split("-")[1]);
                     List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
                     Map<String, Long> wordFreq = new HashMap<>();
                     listOfWords.forEach(word -> {
@@ -129,9 +123,9 @@ public class TFIDFApplication {
                     return list;
                 });
 
-        tf.process(TFIDFProcessor::new, "idf");
+        KStream<String, String> kv = tf.transform(TFIDFTransformer::new, "idf");
 
-        tf.to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+        kv.to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
 
     }
 }

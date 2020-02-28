@@ -43,9 +43,7 @@ public class TFIDFConsumer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.printf("Consumer Record:(%s, %s, %d, %d)\n",
-                        record.key(), record.value(),
-                        record.partition(), record.offset());
+                System.out.printf("Consumer Record:(%s, %s)\n", record.key(), record.value());
             });
             consumer.commitAsync();
         }

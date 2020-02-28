@@ -1,7 +1,6 @@
 package org.bakdata.kafka.challenge;
 
 import com.bakdata.kafka.AbstractS3BackedConfig;
-import com.bakdata.kafka.S3BackedSerde;
 import com.bakdata.kafka.S3BackedSerdeConfig;
 import com.bakdata.kafka.S3BackedSerializer;
 
@@ -9,20 +8,15 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.protocol.types.Field;
-import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.omg.CORBA.DATA_CONVERSION;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -38,7 +32,7 @@ public class TFIDFProducer {
         try {
             List<File> files = getFilesToRead();
 
-//            files = files.subList(0, 21);
+//            files = files.subList(0, 2);
 //            files.removeAll(files);
 //
 //            files.add(new File(DATA_PATH + "document2.txt"));
