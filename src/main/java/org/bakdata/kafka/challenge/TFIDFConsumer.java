@@ -6,7 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.bakdata.kafka.challenge.model.TFIDFResult;
-import org.bakdata.kafka.challenge.costumSerde.tfidfResultSerde.TFIDFResultDeserializer;
+import org.bakdata.kafka.challenge.customSerde.tfidfResultSerde.TFIDFResultDeserializer;
 
 import java.io.FileWriter;
 import java.io.IOException;

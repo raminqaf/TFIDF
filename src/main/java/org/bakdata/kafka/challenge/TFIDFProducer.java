@@ -9,9 +9,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.bakdata.kafka.challenge.costumSerde.producerKeyInfoSerde.ProducerKeyInfoSerializer;
-import org.bakdata.kafka.challenge.model.Information;
+import org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde.ProducerKeyInfoSerializer;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 
 import java.io.BufferedReader;
@@ -23,8 +21,6 @@ import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import javax.sound.sampled.Line;
 
 public class TFIDFProducer {
     private final static String COMMA_DELIMITER = ",";

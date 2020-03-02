@@ -1,4 +1,4 @@
-package org.bakdata.kafka.challenge.costumSerde.producerKeyInfoSerde;
+package org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde;
 
 import org.apache.kafka.common.serialization.Serializer;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;

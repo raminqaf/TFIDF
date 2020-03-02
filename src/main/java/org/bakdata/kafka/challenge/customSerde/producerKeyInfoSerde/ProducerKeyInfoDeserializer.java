@@ -1,7 +1,6 @@
-package org.bakdata.kafka.challenge.costumSerde.producerKeyInfoSerde;
+package org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde;
 
 import org.apache.kafka.common.serialization.Deserializer;
-import org.bakdata.kafka.challenge.model.Information;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 import org.codehaus.jackson.map.ObjectMapper;
 

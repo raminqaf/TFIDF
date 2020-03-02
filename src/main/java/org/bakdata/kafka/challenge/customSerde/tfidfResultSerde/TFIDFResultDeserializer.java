@@ -1,4 +1,4 @@
-package org.bakdata.kafka.challenge.costumSerde.tfidfResultSerde;
+package org.bakdata.kafka.challenge.customSerde.tfidfResultSerde;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.bakdata.kafka.challenge.model.TFIDFResult;
