@@ -16,6 +16,11 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.bakdata.kafka.challenge.costumSerde.producerKeyInfoSerde.ProducerKeyInfoSerde;
+import org.bakdata.kafka.challenge.costumSerde.tfidfResultSerde.TFIDFResultSerde;
+import org.bakdata.kafka.challenge.model.Information;
+import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
+import org.bakdata.kafka.challenge.model.TFIDFResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,12 +34,10 @@ import java.util.regex.Pattern;
 import static org.bakdata.kafka.challenge.TFIDFProducer.runProducer;
 
 public class TFIDFApplication {
-    static final String inputTopic = "streams-plaintext-input";
-    static final String outputTopic = "streams-output";
-    static double documentCount = 0d;
+    static final String inputTopic = IKafkaConstants.INPUT_TOPIC;
+    static final String outputTopic = IKafkaConstants.OUTPUT_TOPIC;
 
     public static void main(final String[] args) throws Exception {
-        final String bootstrapServers = args.length > 0 ? args[0] : "localhost:9092";
         Properties prop = new Properties();
         prop.setProperty("bootstrap.servers", "localhost:9092");
         AdminClient admin = AdminClient.create(prop);
@@ -45,7 +48,7 @@ public class TFIDFApplication {
         runProducer();
 
         // Configure the Streams application.
-        final Properties streamsConfiguration = getStreamsConfiguration(bootstrapServers);
+        final Properties streamsConfiguration = getStreamsConfiguration();
 
         // Define the processing topology of the Streams application.
         final StreamsBuilder builder = new StreamsBuilder();
@@ -68,28 +71,28 @@ public class TFIDFApplication {
         }
     }
 
-    static Properties getStreamsConfiguration(final String bootstrapServers) {
+    static Properties getStreamsConfiguration() {
         final Properties streamsConfiguration = new Properties();
 
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "TFIDF");
-        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, IKafkaConstants.APPLICATION_ID_CONFIG);
+        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
 
-        streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+        streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, ProducerKeyInfoSerde.class);
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, S3BackedSerde.class);
-        streamsConfiguration.setProperty(AbstractS3BackedConfig.BASE_PATH_CONFIG, "s3://bignamesofsience/");
-        streamsConfiguration.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, "s3.eu-central-1");
+        streamsConfiguration.setProperty(AbstractS3BackedConfig.BASE_PATH_CONFIG, IKafkaConstants.S3_BASE_PATH);
+        streamsConfiguration.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, IKafkaConstants.S3_REGION);
         streamsConfiguration.put(S3BackedSerdeConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
 
         return streamsConfiguration;
     }
 
     static void createWordCountStream(final StreamsBuilder builder) {
-        final KStream<String, String> textLines = builder.stream(inputTopic);
+        final KStream<ProducerKeyInfo, String> textLines = builder.stream(inputTopic);
 
 
         // create store
-        StoreBuilder<KeyValueStore<String,Double>> keyValueStoreBuilder =
-                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore("idf"),
+        StoreBuilder<KeyValueStore<String, Double>> keyValueStoreBuilder =
+                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT),
                         Serdes.String(),
                         Serdes.Double());
 
@@ -99,10 +102,10 @@ public class TFIDFApplication {
 
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
-        KStream<String, String> tf =
+        KStream<String, Information> tf =
                 textLines.flatMap((documentNameAndCount, fileContent) -> {
-                    String documentName = documentNameAndCount.split("-")[0];
-                    documentCount = Double.parseDouble(documentNameAndCount.split("-")[1]);
+                    String documentName = documentNameAndCount.getDocumentName();
+                    double documentCount = documentNameAndCount.getDocumentNumber();
                     List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
                     Map<String, Long> wordFreq = new HashMap<>();
                     listOfWords.forEach(word -> {
@@ -115,17 +118,18 @@ public class TFIDFApplication {
                         }
                     });
                     double sumOfWordsInDocument = listOfWords.size();
-                    List<KeyValue<String, String>> list = new ArrayList<>();
+                    List<KeyValue<String, Information>> list = new ArrayList<>();
                     wordFreq.forEach((word, count) -> {
                         double termFrequency = count / sumOfWordsInDocument;
-                        list.add(new KeyValue<>(word, termFrequency + "@" + documentName + "@" + documentCount));
+                        Information information = new Information(termFrequency, documentName, documentCount);
+                        list.add(new KeyValue<>(word, information));
                     });
                     return list;
                 });
 
-        KStream<String, String> kv = tf.transform(TFIDFTransformer::new, "idf");
+        KStream<String, TFIDFResult> kv = tf.transform(TFIDFTransformer::new, IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
 
-        kv.to(outputTopic, Produced.with(Serdes.String(), Serdes.String()));
+        kv.to(outputTopic, Produced.with(Serdes.String(), new TFIDFResultSerde()));
 
     }
 }

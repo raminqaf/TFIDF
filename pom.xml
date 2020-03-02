@@ -38,8 +38,10 @@
     </build>
 
     <properties>
-        <kafka.version>2.3.0</kafka.version>
+        <kafka.version>2.4.0</kafka.version>
         <avro.version>1.8.2</avro.version>
+        <confluent.version>5.4.0</confluent.version>
+        <junit.version>5.6.0</junit.version>
     </properties>
 
     <repositories>
@@ -69,27 +71,6 @@
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>2.13.0</version>
         </dependency>
-        <!-- JUnit5 Jupiter -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- JUnit 5 Jupiter Engine -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- JUnit 5 Jupiter Parameterized Testing -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>5.3.1</version>
-            <scope>test</scope>
-        </dependency>
         <!-- Apache Avro-->
         <dependency>
             <groupId>org.apache.avro</groupId>
@@ -111,12 +92,33 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
-            <version>5.4.0</version>
+            <version>${confluent.version}</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-streams-avro-serde</artifactId>
-            <version>5.4.0</version>
+            <version>${confluent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.8</version>
+        </dependency>
+
+        <!-- Kafka streams test utils -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams-test-utils</artifactId>
+            <version>${kafka.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

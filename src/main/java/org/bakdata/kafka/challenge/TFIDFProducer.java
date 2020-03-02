@@ -10,6 +10,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.bakdata.kafka.challenge.costumSerde.producerKeyInfoSerde.ProducerKeyInfoSerializer;
+import org.bakdata.kafka.challenge.model.Information;
+import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,28 +24,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.sound.sampled.Line;
+
 public class TFIDFProducer {
-    private final static String TOPIC = "streams-plaintext-input";
-    private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private final static String COMMA_DELIMITER = ",";
     private final static String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
 
     static void runProducer() throws IOException {
-        final Producer<String, String> producer = createProducer();
+        final Producer<ProducerKeyInfo, String> producer = createProducer();
         try {
             List<File> files = getFilesToRead();
 
 //            files = files.subList(0, 2);
-//            files.removeAll(files);
-//
-//            files.add(new File(DATA_PATH + "document2.txt"));
-//            files.add(new File(DATA_PATH + "document1.txt"));
+            files.removeAll(files);
+
+            files.add(new File(DATA_PATH + "document1.txt"));
+            files.add(new File(DATA_PATH + "document2.txt"));
+
+            int filesCount = 0;
 
             for (File file : files) {
                 try {
+                    filesCount ++;
                     List<String> listOfLines = Files.readAllLines(file.toPath());
                     String allLines = String.join("\n", listOfLines);
-                    final ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC, file.getName() + "-" + files.size(), allLines);
+                    ProducerKeyInfo producerKeyInfo = new ProducerKeyInfo(file.getName(), filesCount);
+                    final ProducerRecord<ProducerKeyInfo, String> record = new ProducerRecord<>(IKafkaConstants.INPUT_TOPIC, producerKeyInfo, allLines);
                     producer.send(record);
                     System.out.println("Sent: " + file.getName());
                 } catch (NoSuchFileException e) {
@@ -58,14 +65,14 @@ public class TFIDFProducer {
         }
     }
 
-    private static Producer<String, String> createProducer() {
+    private static Producer<ProducerKeyInfo, String> createProducer() {
         Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        props.put(ProducerConfig.CLIENT_ID_CONFIG, "TFIDFProducer");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, IKafkaConstants.CLIENT_ID_PRODUCER);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ProducerKeyInfoSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, S3BackedSerializer.class.getName());
-        props.setProperty(AbstractS3BackedConfig.BASE_PATH_CONFIG, "s3://bignamesofsience/");
-        props.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, "eu-central-1");
+        props.setProperty(AbstractS3BackedConfig.BASE_PATH_CONFIG, IKafkaConstants.S3_BASE_PATH);
+        props.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, IKafkaConstants.S3_REGION);
         props.put(S3BackedSerdeConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
         return new KafkaProducer<>(props);
     }
