@@ -1,44 +1,37 @@
 package org.bakdata.kafka.challenge;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import java.util.Iterator;
+import java.util.Properties;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.MockProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
-import org.bakdata.kafka.challenge.IKafkaConstants;
-import org.bakdata.kafka.challenge.IKeyValueStore;
-import org.bakdata.kafka.challenge.TFIDFTransformer;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Iterator;
-import java.util.Properties;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class TFIDFTransformerTest {
 
     private final Transformer transformerUnderTest = new TFIDFTransformer();
-    private MockProcessorContext context;
+    private MockProcessorContext context = null;
 
     @Before
     public void setup() {
 
         // setup test driver
         final Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
+        props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
+        props.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        context = new MockProcessorContext(props);
+        this.context = new MockProcessorContext(props);
 
-        transformerUnderTest.init(context);
+        this.transformerUnderTest.init(this.context);
 
         final KeyValueStore<String, Double> store =
                 Stores.keyValueStoreBuilder(
@@ -48,24 +41,23 @@ public class TFIDFTransformerTest {
                 )
                         .withLoggingDisabled() // Changelog is not supported by MockProcessorContext.
                         .build();
-        store.init(context, store);
+        store.init(this.context, store);
 
-        context.register(store, null);
+        this.context.register(store, null);
     }
 
     @Test
     public void testTransformer() {
-        transformerUnderTest.transform("example", "0.429@document2.txt@2");
+        this.transformerUnderTest.transform("example", "0.429@document2.txt@2");
 
-        final Iterator<MockProcessorContext.CapturedForward> forwarded = context.forwarded().iterator();
+        final Iterator<MockProcessorContext.CapturedForward> forwarded = this.context.forwarded().iterator();
 
-        assertEquals(forwarded.next().keyValue(), new KeyValue<>("key", 1d));
+        assertEquals(new KeyValue<>("key", 1.0d), forwarded.next().keyValue());
 
         assertFalse(forwarded.hasNext());
 
-        // you can reset forwards to clear the captured data. This may be helpful in constructing longer scenarios.
-        context.resetForwards();
+        this.context.resetForwards();
 
-        assertEquals(context.forwarded().size(), 0);
+        assertEquals(0, this.context.forwarded().size());
     }
 }
