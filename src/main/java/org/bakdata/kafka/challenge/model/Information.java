@@ -1,39 +1,40 @@
 package org.bakdata.kafka.challenge.model;
 
 public class Information {
-    private double TermFrequency;
-    private String DocumentName;
-    private double OverallDocumentCount;
+    private double TermFrequency = 0.0;
+    private String DocumentName = "";
+    private double OverallDocumentCount = 0.0;
 
-    public Information() { }
+    public Information() {
+    }
 
-    public Information(double termFrequency, String documentName, double overallDocumentCount) {
-        TermFrequency = termFrequency;
-        DocumentName = documentName;
-        OverallDocumentCount = overallDocumentCount;
+    public Information(final double termFrequency, final String documentName, final double overallDocumentCount) {
+        this.TermFrequency = termFrequency;
+        this.DocumentName = documentName;
+        this.OverallDocumentCount = overallDocumentCount;
     }
 
     public double getTermFrequency() {
-        return TermFrequency;
+        return this.TermFrequency;
     }
 
-    public void setTermFrequency(double termFrequency) {
-        TermFrequency = termFrequency;
+    public void setTermFrequency(final double termFrequency) {
+        this.TermFrequency = termFrequency;
     }
 
     public String getDocumentName() {
-        return DocumentName;
+        return this.DocumentName;
     }
 
-    public void setDocumentName(String documentName) {
-        DocumentName = documentName;
+    public void setDocumentName(final String documentName) {
+        this.DocumentName = documentName;
     }
 
     public double getOverallDocumentCount() {
-        return OverallDocumentCount;
+        return this.OverallDocumentCount;
     }
 
-    public void setOverallDocumentCount(double overallDocumentCount) {
-        OverallDocumentCount = overallDocumentCount;
+    public void setOverallDocumentCount(final double overallDocumentCount) {
+        this.OverallDocumentCount = overallDocumentCount;
     }
 }

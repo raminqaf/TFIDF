@@ -1,9 +1,20 @@
 package org.bakdata.kafka.challenge;
 
+import static org.bakdata.kafka.challenge.TFIDFProducer.runProducer;
+
 import com.bakdata.kafka.AbstractS3BackedConfig;
 import com.bakdata.kafka.S3BackedSerde;
 import com.bakdata.kafka.S3BackedSerdeConfig;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
@@ -22,26 +33,18 @@ import org.bakdata.kafka.challenge.model.Information;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 import org.bakdata.kafka.challenge.model.TFIDFResult;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import static org.bakdata.kafka.challenge.TFIDFProducer.runProducer;
-
-public class TFIDFApplication {
+public final class TFIDFApplication {
     static final String inputTopic = IKafkaConstants.INPUT_TOPIC;
     static final String outputTopic = IKafkaConstants.OUTPUT_TOPIC;
 
+    private TFIDFApplication() {
+    }
+
     public static void main(final String[] args) throws Exception {
-        Properties prop = new Properties();
+        final Properties prop = new Properties();
         prop.setProperty("bootstrap.servers", "localhost:9092");
-        AdminClient admin = AdminClient.create(prop);
-        Set<String> topics = admin.listTopics().names().get();
+        final AdminClient admin = AdminClient.create(prop);
+        final Set<String> topics = admin.listTopics().names().get();
         admin.deleteTopics(topics);
         createTopic(admin, topics, inputTopic);
         createTopic(admin, topics, outputTopic);
@@ -59,13 +62,13 @@ public class TFIDFApplication {
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
     }
 
-    private static void createTopic(AdminClient admin, Set<String> topics, String topic) {
+    private static void createTopic(final Admin admin, final Collection<String> topics, final String topic) {
         if (topics.stream().noneMatch(topicName -> topicName.equalsIgnoreCase(topic))) {
-            List<NewTopic> topicList = new ArrayList<>();
-            Map<String, String> configs = new HashMap<>();
-            int partitions = 1;
-            short replication = 1;
-            NewTopic newTopic = new NewTopic(topic, partitions, replication).configs(configs);
+            final Collection<NewTopic> topicList = new ArrayList<>();
+            final Map<String, String> configs = new HashMap<>();
+            final int partitions = 1;
+            final short replication = 1;
+            final NewTopic newTopic = new NewTopic(topic, partitions, replication).configs(configs);
             topicList.add(newTopic);
             admin.createTopics(topicList);
         }
@@ -74,8 +77,9 @@ public class TFIDFApplication {
     static Properties getStreamsConfiguration() {
         final Properties streamsConfiguration = new Properties();
 
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, IKafkaConstants.APPLICATION_ID_CONFIG);
-        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
+        streamsConfiguration.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, IKafkaConstants.APPLICATION_ID_CONFIG);
+        streamsConfiguration
+                .setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
 
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, ProducerKeyInfoSerde.class);
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, S3BackedSerde.class);
@@ -89,48 +93,51 @@ public class TFIDFApplication {
     static void createWordCountStream(final StreamsBuilder builder) {
         final KStream<ProducerKeyInfo, String> textLines = builder.stream(inputTopic);
 
-
         // create store
-        StoreBuilder<KeyValueStore<String, Double>> keyValueStoreBuilder =
-                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT),
+        final StoreBuilder<KeyValueStore<String, Double>> keyValueStoreBuilder =
+                Stores.keyValueStoreBuilder(
+                        Stores.inMemoryKeyValueStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT),
                         Serdes.String(),
                         Serdes.Double());
 
         // register store
         builder.addStateStore(keyValueStoreBuilder);
 
+        final KStream<String, Information> tf = textLines.flatMap(TFIDFApplication::calculateTF);
 
-        final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-
-        KStream<String, Information> tf =
-                textLines.flatMap((documentNameAndCount, fileContent) -> {
-                    String documentName = documentNameAndCount.getDocumentName();
-                    double documentCount = documentNameAndCount.getDocumentNumber();
-                    List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
-                    Map<String, Long> wordFreq = new HashMap<>();
-                    listOfWords.forEach(word -> {
-                        if (!wordFreq.containsKey(word)) {
-                            wordFreq.put(word, 1L);
-                        } else {
-                            long count = wordFreq.get(word);
-                            count++;
-                            wordFreq.put(word, count);
-                        }
-                    });
-                    double sumOfWordsInDocument = listOfWords.size();
-                    List<KeyValue<String, Information>> list = new ArrayList<>();
-                    wordFreq.forEach((word, count) -> {
-                        double termFrequency = count / sumOfWordsInDocument;
-                        Information information = new Information(termFrequency, documentName, documentCount);
-                        list.add(new KeyValue<>(word, information));
-                    });
-                    return list;
-                });
-
-        KStream<String, TFIDFResult> kv = tf.transform(TFIDFTransformer::new, IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
+        final KStream<String, TFIDFResult> kv =
+                tf.transform(TFIDFTransformer::new, IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
 
         kv.to(outputTopic, Produced.with(Serdes.String(), new TFIDFResultSerde()));
 
+    }
+
+    private static Collection<KeyValue<String, Information>> calculateTF(final ProducerKeyInfo documentNameAndCount,
+            final String fileContent) {
+        final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
+        final String documentName = documentNameAndCount.getDocumentName();
+        final double documentCount = documentNameAndCount.getDocumentNumber();
+        final List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
+        final Map<String, Long> wordFrequencyInDocument = new HashMap<>();
+        listOfWords.forEach(word -> storeWordFrequency(wordFrequencyInDocument, word));
+        final double sumOfWordsInDocument = listOfWords.size();
+        final Collection<KeyValue<String, Information>> list = new ArrayList<>();
+        wordFrequencyInDocument.forEach((word, count) -> {
+            final double termFrequency = count / sumOfWordsInDocument;
+            final Information information = new Information(termFrequency, documentName, documentCount);
+            list.add(new KeyValue<>(word, information));
+        });
+        return list;
+    }
+
+    private static void storeWordFrequency(final Map<? super String, Long> wordFrequencyInDocument, final String word) {
+        if (wordFrequencyInDocument.containsKey(word)) {
+            long count = wordFrequencyInDocument.get(word);
+            count++;
+            wordFrequencyInDocument.put(word, count);
+        } else {
+            wordFrequencyInDocument.put(word, 1L);
+        }
     }
 }
 

@@ -1,8 +1,6 @@
 package org.bakdata.kafka.challenge;
 
-import org.apache.kafka.streams.processor.Processor;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.state.KeyValueStore;
+import static java.lang.Math.log10;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,80 +10,81 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static java.lang.Math.log10;
+import org.apache.kafka.streams.processor.Processor;
+import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.state.KeyValueStore;
 
 public class TFIDFProcessor implements Processor<String, String> {
 
-    private ProcessorContext context;
-    private List<String> documents;
-    private Map<String, Set<String>> wordDocumentMap;
-    private Map<String, String> tfIdfMap;
-    private Map<String, Double> mapTF;
+    private ProcessorContext context = null;
+    private List<String> documents = null;
+    private Map<String, Set<String>> wordDocumentMap = null;
+    private Map<String, Double> mapTF = null;
 
-    public static KeyValueStore<String, Double> overallWordCount;
-    public static Double documentsCount;
+    private static KeyValueStore<String, Double> overallWordCount = null;
+    private static Double documentsCount = null;
 
 
-    @Override public void init(ProcessorContext processorContext) {
+    @Override
+    public void init(final ProcessorContext processorContext) {
         this.context = processorContext;
         this.documents = new ArrayList<>();
         this.wordDocumentMap = new HashMap<>();
-        this.tfIdfMap = new HashMap<>();
         this.mapTF = new HashMap<>();
         // retrieve the key-value store named "Counts"
-        overallWordCount = (KeyValueStore) context.getStateStore("idf");
+        overallWordCount = (KeyValueStore) this.context.getStateStore("idf");
     }
 
-    @Override public void process(String word, String tfDocNameDocCount) {
-        double tf = Double.parseDouble(tfDocNameDocCount.split("@")[0]);
-        String docName = tfDocNameDocCount.split("@")[1];
-        mapTF.put(word + "@" + docName, tf);
+    @Override
+    public void process(final String word, final String tfDocNameDocCount) {
+        final double tf = Double.parseDouble(tfDocNameDocCount.split("@")[0]);
+        final String docName = tfDocNameDocCount.split("@")[1];
+        this.mapTF.put(word + "@" + docName, tf);
         //documentsCount = Double.parseDouble(tfDocNameDocCount.split("@")[2]);
 
-
-        calculateDocumentCount(docName);
-        Set<String> setMap = wordDocumentMap.get(word);
+        this.calculateDocumentCount(docName);
+        final Set<String> setMap = this.wordDocumentMap.get(word);
         if (setMap != null) {
             setMap.add(docName);
-            wordDocumentMap.put(word, setMap);
+            this.wordDocumentMap.put(word, setMap);
         } else {
-            Set<String> set = new HashSet<>();
+            final Set<String> set = new HashSet<>();
             set.add(docName);
-            wordDocumentMap.put(word, set);
+            this.wordDocumentMap.put(word, set);
         }
 
-        context.forward(word, tfDocNameDocCount);
-        context.commit();
+        this.context.forward(word, tfDocNameDocCount);
+        this.context.commit();
 
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
         System.out.println("Close called");
 
-        Map<String, Double> mapIDF = new HashMap<>();
-        wordDocumentMap.forEach((word, documents) -> {
-            double documentFrequency = documents.size();
-            double idf = log10(documentsCount / documentFrequency);
+        final Map<String, Double> mapIDF = new HashMap<>();
+        this.wordDocumentMap.forEach((word, documents) -> {
+            final double documentFrequency = documents.size();
+            final double idf = log10(documentsCount / documentFrequency);
             documents.forEach((documentName) -> {
                 mapIDF.put(word + "@" + documentName, idf);
             });
         });
 
-        FileWriter myWriter;
+        final FileWriter myWriter;
         try {
             myWriter = new FileWriter("Data/output.csv");
             myWriter.write("name,tf,idf,tfidf" + "\n");
 
             mapIDF.forEach((word, idf) -> {
-                if (mapTF.containsKey(word)) {
-                    double tf = mapTF.get(word);
-                    double tfidf = idf * tf;
-                    String out = word + "," + tf + "," + idf + "," + tfidf;
+                if (this.mapTF.containsKey(word)) {
+                    final double tf = this.mapTF.get(word);
+                    final double tfidf = idf * tf;
+                    final String out = word + "," + tf + "," + idf + "," + tfidf;
                     System.out.println(out);
                     try {
                         myWriter.write(out + "\n");
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -93,20 +92,17 @@ public class TFIDFProcessor implements Processor<String, String> {
 
             myWriter.close();
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void calculateDocumentCount(String docName) {
-        if (!documents.contains(docName)) {
-            if (overallWordCount.get("documentCount") == null) {
-                documentsCount = 0d;
-            } else {
-                documentsCount = overallWordCount.get("documentCount");
-            }
-            documents.add(docName);
-            documentsCount = (double) documents.size();
+    private void calculateDocumentCount(final String docName) {
+        if (!this.documents.contains(docName)) {
+            documentsCount =
+                    overallWordCount.get("documentCount") == null ? 0.0d : overallWordCount.get("documentCount");
+            this.documents.add(docName);
+            documentsCount = (double) this.documents.size();
             overallWordCount.put("documentCount", documentsCount);
         }
     }

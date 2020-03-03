@@ -1,5 +1,7 @@
 package org.bakdata.kafka.challenge;
 
+import static java.lang.Math.log10;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,13 +15,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.lang.Math.log10;
+public final class TFIDFCalculator {
+    private static final String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
 
-public class TFIDFCalculator {
-    private final static String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
+    private TFIDFCalculator() {
+    }
 
     public static void main(final String[] args) throws Exception {
-        List<File> files = TFIDFProducer.getFilesToRead();
+        final List<File> files = TFIDFProducer.getFilesToRead();
 
 //        files = files.subList(0, 21);
 //        files.removeAll(files);
@@ -27,44 +30,44 @@ public class TFIDFCalculator {
 //        files.add(new File(DATA_PATH + "document2.txt"));
 //        files.add(new File(DATA_PATH + "document1.txt"));
 
-
-        long documentCount = files.size();
-        Map<String, String> mapTF = new HashMap<>();
-        Map<String, Set<String>> wordDocument = new HashMap<>();
-        FileWriter myWriter = new FileWriter("Data/output-calc.csv");
+        final long documentCount = files.size();
+        final Map<String, String> mapTF = new HashMap<>();
+        final Map<String, Set<String>> wordDocument = new HashMap<>();
+        final FileWriter myWriter = new FileWriter("Data/output-calc.csv");
         myWriter.write("name,tf,idf,tfidf" + "\n");
 
         files.forEach((file -> {
-            List<String> listOfLines;
+            final List<String> listOfLines;
             try {
                 listOfLines = Files.readAllLines(file.toPath());
-                List<String> listOfLinesLowerCase = listOfLines.stream().map(String::toLowerCase).collect(Collectors.toList());
-                String fileContent = String.join("\n", listOfLinesLowerCase);
+                final List<String> listOfLinesLowerCase =
+                        listOfLines.stream().map(String::toLowerCase).collect(Collectors.toList());
+                final String fileContent = String.join("\n", listOfLinesLowerCase);
                 calculateTF(file.getName(), fileContent, mapTF);
                 storeAllWords(file.getName(), fileContent, wordDocument);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 e.printStackTrace();
             }
         }));
 
-        Map<String, String> mapIDF = new HashMap<>();
+        final Map<String, String> mapIDF = new HashMap<>();
         wordDocument.forEach((word, documentOccurrence) -> {
-            double documentFrequency = documentOccurrence.size();
-            double idf = log10(documentCount/documentFrequency);
+            final double documentFrequency = documentOccurrence.size();
+            final double idf = log10(documentCount / documentFrequency);
             documentOccurrence.forEach((documentName) -> {
                 mapIDF.put(word + "@" + documentName, String.valueOf(idf));
             });
         });
 
         mapIDF.forEach((word, idf) -> {
-            if(mapTF.containsKey(word)) {
-                double tf = Double.parseDouble(mapTF.get(word));
-                double tfidf = Double.parseDouble(idf) * tf;
-                String out = word + "," + tf + "," + idf + "," + tfidf;
+            if (mapTF.containsKey(word)) {
+                final double tf = Double.parseDouble(mapTF.get(word));
+                final double tfidf = Double.parseDouble(idf) * tf;
+                final String out = word + "," + tf + "," + idf + "," + tfidf;
                 System.out.println(out);
                 try {
                     myWriter.write(out + "\n");
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -73,11 +76,11 @@ public class TFIDFCalculator {
         System.out.println("DONE");
     }
 
-    private static void calculateTF(String fileName, String fileContent, Map<String, String> mapTF) {
+    private static void calculateTF(final String fileName, final String fileContent, final Map<String, String> mapTF) {
 
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-        List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
-        Map<String, Long> wordFreq = new HashMap<>();
+        final List<String> listOfWords = Arrays.asList(pattern.split(fileContent.toLowerCase()));
+        final Map<String, Long> wordFreq = new HashMap<>();
 
         listOfWords.forEach(word -> {
             if (!wordFreq.containsKey(word)) {
@@ -88,24 +91,25 @@ public class TFIDFCalculator {
                 wordFreq.put(word, count);
             }
         });
-        double sumOfWordsInDocument = listOfWords.size();
+        final double sumOfWordsInDocument = listOfWords.size();
 
         wordFreq.forEach((word, count) -> {
-            double termFrequency = count / sumOfWordsInDocument;
+            final double termFrequency = count / sumOfWordsInDocument;
             mapTF.put(word + "@" + fileName, String.valueOf(termFrequency));
         });
     }
 
-    private static void storeAllWords(String documentName, String fileContent, Map<String, Set<String>> wordDocumentMap) {
+    private static void storeAllWords(final String documentName, final String fileContent,
+            final Map<String, Set<String>> wordDocumentMap) {
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
-        List<String> listOfWords = Arrays.asList(pattern.split(fileContent));
+        final List<String> listOfWords = Arrays.asList(pattern.split(fileContent));
         listOfWords.forEach((word) -> {
-            Set<String> setMap = wordDocumentMap.get(word);
+            final Set<String> setMap = wordDocumentMap.get(word);
             if (setMap != null) {
                 setMap.add(documentName);
                 wordDocumentMap.put(word, setMap);
             } else {
-                Set<String> set = new HashSet<>();
+                final Set<String> set = new HashSet<>();
                 set.add(documentName);
                 wordDocumentMap.put(word, set);
             }

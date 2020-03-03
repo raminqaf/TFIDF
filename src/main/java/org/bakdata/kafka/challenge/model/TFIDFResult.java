@@ -1,47 +1,49 @@
 package org.bakdata.kafka.challenge.model;
 
 public class TFIDFResult {
-    private String documentName;
-    private double tfidf;
-    private double overallDocumentCount;
+    private String documentName = "";
+    private double tfidf = 0.0;
+    private double overallDocumentCount = 0.0;
 
-    public TFIDFResult() { }
+    public TFIDFResult() {
+    }
 
-    public TFIDFResult(String documentName, double tfidf, double overallDocumentCount) {
+    public TFIDFResult(final String documentName, final double tfidf, final double overallDocumentCount) {
         this.documentName = documentName;
         this.tfidf = tfidf;
         this.overallDocumentCount = overallDocumentCount;
     }
 
     public String getDocumentName() {
-        return documentName;
+        return this.documentName;
     }
 
-    public void setDocumentName(String documentName) {
+    public void setDocumentName(final String documentName) {
         this.documentName = documentName;
     }
 
     public double getTfidf() {
-        return tfidf;
+        return this.tfidf;
     }
 
-    public void setTfidf(double tfidf) {
+    public void setTfidf(final double tfidf) {
         this.tfidf = tfidf;
     }
 
     public double getOverallDocumentCount() {
-        return overallDocumentCount;
+        return this.overallDocumentCount;
     }
 
-    public void setOverallDocumentCount(double overallDocumentCount) {
+    public void setOverallDocumentCount(final double overallDocumentCount) {
         this.overallDocumentCount = overallDocumentCount;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "TFIDFResult{" +
-                "documentName='" + documentName + '\'' +
-                ", tfidf=" + tfidf +
-                ", overallDocumentCount=" + overallDocumentCount +
+                "documentName='" + this.documentName + '\'' +
+                ", tfidf=" + this.tfidf +
+                ", overallDocumentCount=" + this.overallDocumentCount +
                 '}';
     }
 }

@@ -9,22 +9,22 @@ import org.bakdata.kafka.challenge.model.TFIDFResult;
 
 public class TFIDFTransformer implements Transformer<String, Information, KeyValue<String, TFIDFResult>> {
 
-    private ProcessorContext context;
-    private KeyValueStore<String, Double> wordOccurrences;
+    private KeyValueStore<String, Double> wordOccurrences = null;
 
-    @Override public void init(ProcessorContext processorContext) {
-        this.context = processorContext;
+    @Override
+    public void init(final ProcessorContext processorContext) {
 
         // retrieve the key-value store named "Counts"
-        wordOccurrences = (KeyValueStore<String, Double>) context.getStateStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
+        this.wordOccurrences =
+                (KeyValueStore<String, Double>) processorContext.getStateStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
     }
 
-    @Override public KeyValue<String, TFIDFResult> transform(String word, Information information) {
+    @Override
+    public KeyValue<String, TFIDFResult> transform(final String word, final Information information) {
 
-        double tf = information.getTermFrequency();
-        String documentName = information.getDocumentName();
-        double overallDocumentCount = information.getOverallDocumentCount();
-
+        final double tf = information.getTermFrequency();
+        final String documentName = information.getDocumentName();
+        final double overallDocumentCount = information.getOverallDocumentCount();
 
         Double occurrences = this.wordOccurrences.get(word);
         // handle missing entry
@@ -43,7 +43,8 @@ public class TFIDFTransformer implements Transformer<String, Information, KeyVal
         return new KeyValue<>(word, result);
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
 
     }
 }
