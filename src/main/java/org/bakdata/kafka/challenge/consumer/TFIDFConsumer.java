@@ -22,40 +22,25 @@
  * SOFTWARE.
  */
 
-package org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde;
+package org.bakdata.kafka.challenge.consumer;
 
-import java.util.Map;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
-import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
+import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class ProducerKeyInfoSerde implements Serde<ProducerKeyInfo> {
+public final class TFIDFConsumer {
 
-    private final Serde<ProducerKeyInfo> inner;
+    private static final long DEFAULT_TIMEOUT = 3600L;
 
-    public ProducerKeyInfoSerde() {
-        this.inner = Serdes.serdeFrom(new ProducerKeyInfoSerializer(), new ProducerKeyInfoDeserializer());
+    private TFIDFConsumer() {
     }
 
-    @Override
-    public void configure(final Map<String, ?> configs, final boolean isKey) {
-        this.inner.configure(configs, isKey);
-    }
-
-    @Override
-    public void close() {
-        this.inner.close();
-    }
-
-    @Override
-    public Serializer<ProducerKeyInfo> serializer() {
-        return this.inner.serializer();
-    }
-
-    @Override
-    public Deserializer<ProducerKeyInfo> deserializer() {
-        return this.inner.deserializer();
+    public static void main(final String[] args) throws InterruptedException {
+        final long timeOutInSeconds = args[0] == null ? DEFAULT_TIMEOUT : Long.parseLong(args[0]);
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Callable<Object> callable = Executors.callable(new ConsumerTask(timeOutInSeconds));
+        executor.invokeAll(Collections.singletonList(callable));
+        executor.shutdown();
     }
 }

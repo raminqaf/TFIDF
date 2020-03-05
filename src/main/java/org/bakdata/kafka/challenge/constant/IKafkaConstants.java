@@ -22,40 +22,15 @@
  * SOFTWARE.
  */
 
-package org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde;
+package org.bakdata.kafka.challenge.constant;
 
-import java.util.Map;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
-import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
-
-public class ProducerKeyInfoSerde implements Serde<ProducerKeyInfo> {
-
-    private final Serde<ProducerKeyInfo> inner;
-
-    public ProducerKeyInfoSerde() {
-        this.inner = Serdes.serdeFrom(new ProducerKeyInfoSerializer(), new ProducerKeyInfoDeserializer());
-    }
-
-    @Override
-    public void configure(final Map<String, ?> configs, final boolean isKey) {
-        this.inner.configure(configs, isKey);
-    }
-
-    @Override
-    public void close() {
-        this.inner.close();
-    }
-
-    @Override
-    public Serializer<ProducerKeyInfo> serializer() {
-        return this.inner.serializer();
-    }
-
-    @Override
-    public Deserializer<ProducerKeyInfo> deserializer() {
-        return this.inner.deserializer();
-    }
+public interface IKafkaConstants {
+    String APPLICATION_ID_CONFIG = "TFIDF";
+    String KAFKA_BOOTSTRAP_SERVERS = "localhost:9092";
+    String INPUT_TOPIC = "streams-plaintext-input";
+    String OUTPUT_TOPIC = "streams-output";
+    String S3_BASE_PATH = "s3://bignamesofsience/";
+    String S3_REGION = "s3.eu-central-1";
+    String CLIENT_ID_PRODUCER = "TFIDFProducer";
+    String CLIENT_ID_CONSUMER = "TFIDFConsumer";
 }
