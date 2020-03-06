@@ -101,7 +101,7 @@ public class TFIDFTask implements Runnable {
 
         // Define the processing topology of the Streams application.
         final StreamsBuilder builder = new StreamsBuilder();
-        createWordCountStream(builder);
+        createTFIDFStream(builder);
         final KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfiguration);
         streams.cleanUp();
         streams.start();
@@ -137,7 +137,7 @@ public class TFIDFTask implements Runnable {
         return streamsConfiguration;
     }
 
-    static void createWordCountStream(final StreamsBuilder builder) {
+    static void createTFIDFStream(final StreamsBuilder builder) {
         final KStream<ProducerKeyInfo, String> textLines = builder.stream(inputTopic);
 
         // create store

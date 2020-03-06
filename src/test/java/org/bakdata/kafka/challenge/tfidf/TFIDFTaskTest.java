@@ -54,7 +54,7 @@ public class TFIDFTaskTest {
     @Before
     public void setup() {
         final StreamsBuilder builder = new StreamsBuilder();
-        TFIDFTask.createWordCountStream(builder);
+        TFIDFTask.createTFIDFStream(builder);
         final Properties props = TFIDFTask.getStreamsConfiguration();
         this.testDriver = new TopologyTestDriver(builder.build(), props);
         this.inputTopic = this.testDriver
