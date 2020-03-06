@@ -10,7 +10,7 @@
 
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin-->
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -57,13 +57,13 @@
     </repositories>
 
     <dependencies>
-        <!-- Apache Kafka Clients-->
+        <!-- Apache Kafka Clients -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
         </dependency>
-        <!-- Apache Kafka Streams-->
+        <!-- Apache Kafka Streams -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-streams</artifactId>
@@ -85,7 +85,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- Apache Avro-->
+        <!-- Apache Avro -->
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
@@ -96,13 +96,13 @@
             <artifactId>avro-maven-plugin</artifactId>
             <version>${avro.version}</version>
         </dependency>
-        <!-- S3 Backed Serde-->
+        <!-- S3 Backed Serde -->
         <dependency>
             <groupId>com.bakdata.kafka</groupId>
             <artifactId>s3-backed-serde</artifactId>
             <version>${s3backedserde.version}</version>
         </dependency>
-        <!-- Confluent-->
+        <!-- Confluent -->
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
@@ -113,12 +113,20 @@
             <artifactId>kafka-streams-avro-serde</artifactId>
             <version>${confluent.version}</version>
         </dependency>
-        <!-- Jackson-->
+        <!-- Jackson -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+
+        <!-- aws-java-sdk-s3 -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.737</version>
+        </dependency>
+
 
         <!-- Kafka streams test utils -->
         <dependency>

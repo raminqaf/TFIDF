@@ -60,6 +60,7 @@ import org.bakdata.kafka.challenge.customSerde.tfidfResultSerde.TFIDFResultSerde
 import org.bakdata.kafka.challenge.model.Information;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 import org.bakdata.kafka.challenge.model.TFIDFResult;
+import org.bakdata.kafka.challenge.s3.S3Handler;
 import org.bakdata.kafka.challenge.transformer.TFIDFTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,12 +80,16 @@ public class TFIDFTask implements Runnable {
         final Set<String> topics;
         try {
             topics = admin.listTopics().names().get();
+
             logger.info("deleting the content of the input/output topics");
             admin.deleteTopics(topics);
+
             logger.info("creating the input topic");
             createTopic(admin, topics, inputTopic);
             logger.info("creating the output topic");
             createTopic(admin, topics, outputTopic);
+
+            S3Handler.emptyS3Bucket(IKafkaConstants.S3_BUCKET_NAME, IKafkaConstants.S3_REGION);
 
             runProducer();
         } catch (final IOException | ExecutionException | InterruptedException e) {
@@ -126,7 +131,7 @@ public class TFIDFTask implements Runnable {
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, ProducerKeyInfoSerde.class);
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, S3BackedSerde.class);
         streamsConfiguration.setProperty(AbstractS3BackedConfig.BASE_PATH_CONFIG, IKafkaConstants.S3_BASE_PATH);
-        streamsConfiguration.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, IKafkaConstants.S3_REGION);
+        streamsConfiguration.setProperty(AbstractS3BackedConfig.S3_REGION_CONFIG, IKafkaConstants.S3_REGION_CONFIG);
         streamsConfiguration.put(S3BackedSerdeConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
 
         return streamsConfiguration;

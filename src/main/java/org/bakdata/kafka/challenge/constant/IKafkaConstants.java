@@ -29,8 +29,10 @@ public interface IKafkaConstants {
     String KAFKA_BOOTSTRAP_SERVERS = "localhost:9092";
     String INPUT_TOPIC = "streams-plaintext-input";
     String OUTPUT_TOPIC = "streams-output";
-    String S3_BASE_PATH = "s3://bignamesofsience/";
-    String S3_REGION = "s3.eu-central-1";
+    String S3_BUCKET_NAME = "bignamesofsience";
+    String S3_BASE_PATH = "s3://" + S3_BUCKET_NAME + "/";
+    String S3_REGION = "eu-central-1";
+    String S3_REGION_CONFIG = "s3.eu-central-1";
     String CLIENT_ID_PRODUCER = "TFIDFProducer";
     String CLIENT_ID_CONSUMER = "TFIDFConsumer";
 }
