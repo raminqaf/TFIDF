@@ -129,8 +129,8 @@ buildNumber.properties
 .flattened-pom.xml
 
 ### Data ###
-Data/vep_big_names_of_science_v2_txt/**
-Data/output.csv
-Data/output-calc.csv
+data/vep_big_names_of_science_v2_txt/**
+data/output.csv
+data/output-calc.csv
 
 # End of https://www.gitignore.io/api/java,maven,intellij

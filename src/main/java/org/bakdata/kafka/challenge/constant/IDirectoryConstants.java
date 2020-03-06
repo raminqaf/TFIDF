@@ -25,7 +25,7 @@
 package org.bakdata.kafka.challenge.constant;
 
 public interface IDirectoryConstants {
-    String DATA_DIRECTORY = "Data/";
+    String DATA_DIRECTORY = "data/";
     String FILES_DIRECTORY = "vep_big_names_of_science_v2_txt/";
     String METADATA_FILE = "VEP_Big_Names_of_Science_Metadata.csv";
     String OUTPUT_FILE_NAME = "output.csv";
