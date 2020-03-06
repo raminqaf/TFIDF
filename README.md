@@ -33,7 +33,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing and running the program
 
-1. Create a directory called `data` in the root of the project.
+1. If the `data` directory exists skip this step. Create a directory called `data` in the root of the project.
 
     ```
     $ mkdir data
