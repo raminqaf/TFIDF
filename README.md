@@ -6,13 +6,13 @@ This repository of the TFIDF coding challenge for [Bakdata](https://github.com/b
 
 Use-Case Scientific publications are continuously loaded to S3 and processed with Apache Kafka to create an output topic with TFIDF values to identify important words in the text corpus.
 
-Example data (vep_big_names_of_science_v2_txt.zip) https://graphics.cs.wisc.edu/WP/vep/vep-early-modern-science-collection/
+Example data [vep_big_names_of_science_v2_txt.zip](https://graphics.cs.wisc.edu/WP/vep/vep-early-modern-science-collection/)
 
-TFIDF https://en.wikipedia.org/wiki/Tf–idf
+[TFIDF](https://en.wikipedia.org/wiki/Tf–idf)
 
 Task I) Build a data pipeline with Apache Kafka and Kafka Streams to create a TFIDF output topic for the given example data.
 
-Task II) Make handling of large texts (>1 MB) also possible and use for large message processing this SerDe, https://github.com/bakdata/kafka-s3-backed-serde
+Task II) Make handling of large texts (>1 MB) also possible and use for large message processing this SerDe, [kafka-s3-backed-serde](https://github.com/bakdata/kafka-s3-backed-serde)
 
 ## Getting Started
 
@@ -39,7 +39,7 @@ These instructions will get you a copy of the project up and running on your loc
     $ mkdir data
     ```
 
-2. Download and unzip the [vep_big_names_of_science_v2_txt](http://vep.cs.wisc.edu/VEPCorporaRelease/zips/vep_big_names_of_science_v2_txt.zip)
+2. Download and unzip the [vep_big_names_of_science_v2_txt](http://vep.cs.wisc.edu/VEPCorporaRelease/zips/vep_big_names_of_science_v2_txt.zip).
 
     ```
     $ curl -O http://vep.cs.wisc.edu/VEPCorporaRelease/zips/vep_big_names_of_science_v2_txt.zip
