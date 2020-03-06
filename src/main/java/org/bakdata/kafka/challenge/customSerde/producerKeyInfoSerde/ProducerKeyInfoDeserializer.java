@@ -29,8 +29,12 @@ import java.util.Map;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProducerKeyInfoDeserializer implements Deserializer<ProducerKeyInfo> {
+    private static final Logger logger = LoggerFactory.getLogger(ProducerKeyInfoDeserializer.class);
+
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
     }
@@ -44,7 +48,7 @@ public class ProducerKeyInfoDeserializer implements Deserializer<ProducerKeyInfo
         try {
             return objectMapper.readValue(data, ProducerKeyInfo.class);
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         }
         return null;
     }

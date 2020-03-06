@@ -41,18 +41,24 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.bakdata.kafka.challenge.constant.IDirectoryConstants;
 import org.bakdata.kafka.challenge.constant.IKafkaConstants;
 import org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde.ProducerKeyInfoSerializer;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class TFIDFProducer {
     private static final String COMMA_DELIMITER = ",";
-    private static final String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
+    private static final String DATA_PATH = IDirectoryConstants.DATA_DIRECTORY + IDirectoryConstants.FILES_DIRECTORY;
+
+    private static final Logger logger = LoggerFactory.getLogger(TFIDFProducer.class);
 
     private TFIDFProducer() {
     }
 
     public static void runProducer() throws IOException {
+        logger.info("Producer Started...");
         final Producer<ProducerKeyInfo, String> producer = createProducer();
         try {
             final List<File> files = getFilesToRead();
@@ -74,14 +80,14 @@ public final class TFIDFProducer {
                     final ProducerRecord<ProducerKeyInfo, String> record =
                             new ProducerRecord<>(IKafkaConstants.INPUT_TOPIC, producerKeyInfo, allLines);
                     producer.send(record);
-                    System.out.println("Sent: " + file.getName());
+                    logger.info("Sent: {}", file.getName());
                 } catch (final NoSuchFileException e) {
-                    System.out.println("This file doesn't exists: " + file.getName());
+                    logger.info("This file doesn't exists: {}", file.getName());
                 }
             }
 
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         } finally {
             producer.flush();
             producer.close();
@@ -103,7 +109,7 @@ public final class TFIDFProducer {
     public static List<File> getFilesToRead() {
         final List<File> files = new ArrayList<>();
         try (final BufferedReader br = new BufferedReader(
-                new FileReader(DATA_PATH + "VEP_Big_Names_of_Science_Metadata.csv"))) {
+                new FileReader(DATA_PATH + IDirectoryConstants.METADATA_FILE))) {
             br.readLine();
             String line;
             while (br.ready()) {
@@ -116,7 +122,7 @@ public final class TFIDFProducer {
                 }
             }
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         }
         return files;
     }

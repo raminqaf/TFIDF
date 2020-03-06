@@ -38,10 +38,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.bakdata.kafka.challenge.constant.IDirectoryConstants;
 import org.bakdata.kafka.challenge.producer.TFIDFProducer;
 
 public final class BatchTFIDFCalculator {
-    private static final String DATA_PATH = "Data/vep_big_names_of_science_v2_txt/";
+    private static final String OUTPUT_PATH =
+            IDirectoryConstants.DATA_DIRECTORY + IDirectoryConstants.OUTPUT_FILE_NAME_CALC;
 
     private BatchTFIDFCalculator() {
     }
@@ -58,8 +60,8 @@ public final class BatchTFIDFCalculator {
         final long documentCount = files.size();
         final Map<String, String> mapTF = new HashMap<>();
         final Map<String, Set<String>> wordDocument = new HashMap<>();
-        final FileWriter myWriter = new FileWriter("Data/output-calc.csv");
-        myWriter.write("name,tf,idf,tfidf" + "\n");
+        final FileWriter fileWriter = new FileWriter(OUTPUT_PATH);
+        fileWriter.write("name,tf,idf,tfidf" + "\n");
 
         files.forEach((file -> {
             final List<String> listOfLines;
@@ -91,13 +93,13 @@ public final class BatchTFIDFCalculator {
                 final String out = word + "," + tf + "," + idf + "," + tfidf;
                 System.out.println(out);
                 try {
-                    myWriter.write(out + "\n");
+                    fileWriter.write(out + "\n");
                 } catch (final IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-        myWriter.close();
+        fileWriter.close();
         System.out.println("DONE");
     }
 
@@ -108,12 +110,12 @@ public final class BatchTFIDFCalculator {
         final Map<String, Long> wordFreq = new HashMap<>();
 
         listOfWords.forEach(word -> {
-            if (!wordFreq.containsKey(word)) {
-                wordFreq.put(word, 1L);
-            } else {
+            if (wordFreq.containsKey(word)) {
                 long count = wordFreq.get(word);
                 count++;
                 wordFreq.put(word, count);
+            } else {
+                wordFreq.put(word, 1L);
             }
         });
         final double sumOfWordsInDocument = listOfWords.size();
@@ -125,7 +127,7 @@ public final class BatchTFIDFCalculator {
     }
 
     private static void storeAllWords(final String documentName, final String fileContent,
-            final Map<String, Set<String>> wordDocumentMap) {
+            final Map<? super String, Set<String>> wordDocumentMap) {
         final Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
         final List<String> listOfWords = Arrays.asList(pattern.split(fileContent));
         listOfWords.forEach((word) -> {

@@ -42,23 +42,11 @@ public class Information {
         return this.TermFrequency;
     }
 
-    public void setTermFrequency(final double termFrequency) {
-        this.TermFrequency = termFrequency;
-    }
-
     public String getDocumentName() {
         return this.DocumentName;
     }
 
-    public void setDocumentName(final String documentName) {
-        this.DocumentName = documentName;
-    }
-
     public double getOverallDocumentCount() {
         return this.OverallDocumentCount;
-    }
-
-    public void setOverallDocumentCount(final double overallDocumentCount) {
-        this.OverallDocumentCount = overallDocumentCount;
     }
 }

@@ -40,15 +40,7 @@ public class ProducerKeyInfo {
         return this.documentName;
     }
 
-    public void setDocumentName(final String documentName) {
-        this.documentName = documentName;
-    }
-
     public double getDocumentNumber() {
         return this.documentNumber;
-    }
-
-    public void setDocumentNumber(final double documentNumber) {
-        this.documentNumber = documentNumber;
     }
 }

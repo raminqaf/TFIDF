@@ -22,38 +22,12 @@
  * SOFTWARE.
  */
 
-package org.bakdata.kafka.challenge.customSerde.tfidfResultSerde;
+package org.bakdata.kafka.challenge.constant;
 
-import java.io.IOException;
-import java.util.Map;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.bakdata.kafka.challenge.model.TFIDFResult;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class TFIDFResultDeserializer implements Deserializer<TFIDFResult> {
-    private static final Logger logger = LoggerFactory.getLogger(TFIDFResultDeserializer.class);
-
-    @Override
-    public void configure(final Map<String, ?> configs, final boolean isKey) {
-    }
-
-    @Override
-    public TFIDFResult deserialize(final String s, final byte[] data) {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        if (data == null) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(data, TFIDFResult.class);
-        } catch (final IOException e) {
-            logger.error(e.getLocalizedMessage());
-        }
-        return null;
-    }
-
-    @Override
-    public void close() {
-    }
+public interface IDirectoryConstants {
+    String DATA_DIRECTORY = "Data/";
+    String FILES_DIRECTORY = "vep_big_names_of_science_v2_txt/";
+    String METADATA_FILE = "VEP_Big_Names_of_Science_Metadata.csv";
+    String OUTPUT_FILE_NAME = "output.csv";
+    String OUTPUT_FILE_NAME_CALC = "output-calc.csv";
 }

@@ -24,10 +24,15 @@
 
 package org.bakdata.kafka.challenge.customSerde;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class SerializeData {
+
+    private static final Logger logger = LoggerFactory.getLogger(SerializeData.class);
+
     private SerializeData() {
     }
 
@@ -38,8 +43,8 @@ public final class SerializeData {
         }
         try {
             return objectMapper.writeValueAsBytes(data);
-        } catch (final IOException e) {
-            e.printStackTrace();
+        } catch (final JsonProcessingException e) {
+            logger.error(e.getLocalizedMessage());
         }
         return null;
     }

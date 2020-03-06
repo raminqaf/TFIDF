@@ -37,8 +37,18 @@ import java.util.Set;
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.bakdata.kafka.challenge.constant.IDirectoryConstants;
+import org.bakdata.kafka.challenge.constant.IKeyValueStore;
+import org.bakdata.kafka.challenge.consumer.ConsumerTask;
+import org.bakdata.kafka.challenge.model.Information;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TFIDFProcessor implements Processor<String, String> {
+public class TFIDFProcessor implements Processor<String, Information> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConsumerTask.class);
+    private static final String PATH_TO_OUTPUT_FILE =
+            IDirectoryConstants.DATA_DIRECTORY + IDirectoryConstants.OUTPUT_FILE_NAME;
 
     private ProcessorContext context = null;
     private List<String> documents = null;
@@ -48,7 +58,6 @@ public class TFIDFProcessor implements Processor<String, String> {
     private static KeyValueStore<String, Double> overallWordCount = null;
     private static Double documentsCount = null;
 
-
     @Override
     public void init(final ProcessorContext processorContext) {
         this.context = processorContext;
@@ -56,15 +65,14 @@ public class TFIDFProcessor implements Processor<String, String> {
         this.wordDocumentMap = new HashMap<>();
         this.mapTF = new HashMap<>();
         // retrieve the key-value store named "Counts"
-        overallWordCount = (KeyValueStore) this.context.getStateStore("idf");
+        overallWordCount = (KeyValueStore) this.context.getStateStore(IKeyValueStore.PERSISTENT_KV_OVERALL_WORD_COUNT);
     }
 
     @Override
-    public void process(final String word, final String tfDocNameDocCount) {
-        final double tf = Double.parseDouble(tfDocNameDocCount.split("@")[0]);
-        final String docName = tfDocNameDocCount.split("@")[1];
+    public void process(final String word, final Information tfDocNameDocCount) {
+        final double tf = tfDocNameDocCount.getTermFrequency();
+        final String docName = tfDocNameDocCount.getDocumentName();
         this.mapTF.put(word + "@" + docName, tf);
-        //documentsCount = Double.parseDouble(tfDocNameDocCount.split("@")[2]);
 
         this.calculateDocumentCount(docName);
         final Set<String> setMap = this.wordDocumentMap.get(word);
@@ -84,7 +92,7 @@ public class TFIDFProcessor implements Processor<String, String> {
 
     @Override
     public void close() {
-        System.out.println("Close called");
+        logger.info("Close called");
 
         final Map<String, Double> mapIDF = new HashMap<>();
         this.wordDocumentMap.forEach((word, documents) -> {
@@ -95,29 +103,29 @@ public class TFIDFProcessor implements Processor<String, String> {
             });
         });
 
-        final FileWriter myWriter;
+        final FileWriter fileWriter;
         try {
-            myWriter = new FileWriter("Data/output.csv");
-            myWriter.write("name,tf,idf,tfidf" + "\n");
+            fileWriter = new FileWriter(PATH_TO_OUTPUT_FILE);
+            fileWriter.write("name,tf,idf,tfidf" + "\n");
 
             mapIDF.forEach((word, idf) -> {
                 if (this.mapTF.containsKey(word)) {
                     final double tf = this.mapTF.get(word);
                     final double tfidf = idf * tf;
                     final String out = word + "," + tf + "," + idf + "," + tfidf;
-                    System.out.println(out);
+                    logger.info(out);
                     try {
-                        myWriter.write(out + "\n");
+                        fileWriter.write(out + "\n");
                     } catch (final IOException e) {
-                        e.printStackTrace();
+                        logger.error(e.getLocalizedMessage());
                     }
                 }
             });
 
-            myWriter.close();
+            fileWriter.close();
 
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         }
     }
 

@@ -69,7 +69,7 @@ public class TFIDFTaskTest {
     }
 
     @Test
-    public void shouldNotUpdateStoreForLargerValue() {
+    public void testPipeline() {
         final ProducerKeyInfo producerKeyInfo = new ProducerKeyInfo("document2.txt", 2);
         final String fileContent = "this is an example example";
         final TFIDFResult tfidfResult = new TFIDFResult("document2.txt", 0.0d, 2);

@@ -53,34 +53,42 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
-import org.bakdata.kafka.challenge.transformer.TFIDFTransformer;
-import org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde.ProducerKeyInfoSerde;
-import org.bakdata.kafka.challenge.customSerde.tfidfResultSerde.TFIDFResultSerde;
 import org.bakdata.kafka.challenge.constant.IKafkaConstants;
 import org.bakdata.kafka.challenge.constant.IKeyValueStore;
+import org.bakdata.kafka.challenge.customSerde.producerKeyInfoSerde.ProducerKeyInfoSerde;
+import org.bakdata.kafka.challenge.customSerde.tfidfResultSerde.TFIDFResultSerde;
 import org.bakdata.kafka.challenge.model.Information;
 import org.bakdata.kafka.challenge.model.ProducerKeyInfo;
 import org.bakdata.kafka.challenge.model.TFIDFResult;
+import org.bakdata.kafka.challenge.transformer.TFIDFTransformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TFIDFTask implements Runnable {
-    static final String inputTopic = IKafkaConstants.INPUT_TOPIC;
-    static final String outputTopic = IKafkaConstants.OUTPUT_TOPIC;
+    private static final String inputTopic = IKafkaConstants.INPUT_TOPIC;
+    private static final String outputTopic = IKafkaConstants.OUTPUT_TOPIC;
+
+    private static final Logger logger = LoggerFactory.getLogger(TFIDFTask.class);
 
     @Override
     public void run() {
+        logger.info("TFIDF task started...");
         final Properties prop = new Properties();
         prop.setProperty("bootstrap.servers", IKafkaConstants.KAFKA_BOOTSTRAP_SERVERS);
         final AdminClient admin = AdminClient.create(prop);
         final Set<String> topics;
         try {
             topics = admin.listTopics().names().get();
+            logger.info("deleting the content of the input/output topics");
             admin.deleteTopics(topics);
+            logger.info("creating the input topic");
             createTopic(admin, topics, inputTopic);
+            logger.info("creating the output topic");
             createTopic(admin, topics, outputTopic);
 
             runProducer();
         } catch (final IOException | ExecutionException | InterruptedException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         }
 
         // Configure the Streams application.
@@ -154,13 +162,13 @@ public class TFIDFTask implements Runnable {
         final Map<String, Long> wordFrequencyInDocument = new HashMap<>();
         listOfWords.forEach(word -> storeWordFrequency(wordFrequencyInDocument, word));
         final double sumOfWordsInDocument = listOfWords.size();
-        final Collection<KeyValue<String, Information>> list = new ArrayList<>();
+        final Collection<KeyValue<String, Information>> wordInformationList = new ArrayList<>();
         wordFrequencyInDocument.forEach((word, count) -> {
             final double termFrequency = count / sumOfWordsInDocument;
             final Information information = new Information(termFrequency, documentName, documentCount);
-            list.add(new KeyValue<>(word, information));
+            wordInformationList.add(new KeyValue<>(word, information));
         });
-        return list;
+        return wordInformationList;
     }
 
     private static void storeWordFrequency(final Map<? super String, Long> wordFrequencyInDocument, final String word) {
