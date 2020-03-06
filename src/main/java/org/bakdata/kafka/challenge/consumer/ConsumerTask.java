@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -58,30 +59,24 @@ public class ConsumerTask implements Runnable {
     public void run() {
         logger.info(String.format("Consumer with a timeout of %d seconds started", this.timeOutInSeconds));
         final Consumer<String, TFIDFResult> consumer = createConsumer();
-        final FileWriter myWriter;
+        final FileWriter fileWriter;
         final LocalDateTime then = LocalDateTime.now();
         try {
-            myWriter = new FileWriter(PATH_TO_OUTPUT_FILE);
+            fileWriter = new FileWriter(PATH_TO_OUTPUT_FILE);
+            fileWriter.write("word,documentName,tfidf,overallDocumentCount\n");
             while (ChronoUnit.SECONDS.between(then, LocalDateTime.now()) < this.timeOutInSeconds) {
                 final Duration duration = Duration.ofMillis(1000L);
                 final ConsumerRecords<String, TFIDFResult> consumerRecords = consumer.poll(duration);
                 consumerRecords.forEach(record -> {
+                    writeResultToFile(fileWriter, record);
                     final TFIDFResult tfidfResult = record.value();
-                    final String out = String.format("%s, %s", record.key(), tfidfResult) + "\n";
-                    try {
-                        myWriter.write(out);
-                        myWriter.flush();
-
-                    } catch (final IOException e) {
-                        logger.error(e.getLocalizedMessage());
-                    }
                     logger.info(String.format("Consumer Record:(%s, %s)", record.key(), tfidfResult));
                 });
                 consumer.commitAsync();
             }
 
             consumer.close();
-            myWriter.close();
+            fileWriter.close();
             logger.info("Consumer closed");
 
         } catch (final IOException e) {
@@ -100,5 +95,19 @@ public class ConsumerTask implements Runnable {
         // Subscribe to the topic.
         consumer.subscribe(Collections.singletonList(IKafkaConstants.OUTPUT_TOPIC));
         return consumer;
+    }
+
+    private static void writeResultToFile(final FileWriter fileWriter,
+            final ConsumerRecord<String, ? extends TFIDFResult> record) {
+        final TFIDFResult tfidfResult = record.value();
+        final String csvOutput = String.format("%s,%s,%s,%s", record.key(), tfidfResult.getDocumentName(),
+                tfidfResult.getTfidf(), tfidfResult.getOverallDocumentCount()) + "\n";
+        try {
+            fileWriter.write(csvOutput);
+            fileWriter.flush();
+
+        } catch (final IOException e) {
+            logger.error(e.getLocalizedMessage());
+        }
     }
 }
