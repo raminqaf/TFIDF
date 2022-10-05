@@ -44,7 +44,7 @@
         <s3backedserde.version>1.1.0</s3backedserde.version>
         <confluent.version>5.4.0</confluent.version>
         <junit.version>5.6.0</junit.version>
-        <jackson.version>2.10.2</jackson.version>
+        <jackson.version>2.12.6.1</jackson.version>
         <junit.version>4.12</junit.version>
     </properties>
 
